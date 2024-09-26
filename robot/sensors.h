@@ -21,18 +21,20 @@ public:
 	};
 
 	float getError() {
-		switch ((getLinePosition() >> 1) & (~(1 << 3))) {
-			case 0b101: return 0.00; // center line
-
-			case 0b110: return 1.00; // leaning towards left
-			case 0b100: return 0.50;
-
-			case 0b011: return -1.00; // leaning towards right
-			case 0b001: return -0.50;
+		switch (getLinePosition()) {
+			case 0b11011: return 0.00;
+			case 0b11101: return 0.50;
+			case 0b11110: return 1.00;
+			case 0b11001: return 0.25;
+			case 0b11100: return 0.75;
+			case 0b10111: return -0.50;
+			case 0b01111: return -1.00;
+			case 0b10011: return -0.25;
+			case 0b00111: return -0.75;	
 		};
 	};
 
-	int getLinePosition() { // (1 -> black) and (0 -> white)
+	int getLinePosition() { // (0 -> black) and (1 -> white)
 		int linePosition = 0;
 
 		for (int i=0; i<5; i++)
@@ -46,11 +48,7 @@ public:
 		return digitalRead(pins[2]);
 	};
 
-	bool detectLine() {
-		return digitalRead(pins[1]) || digitalRead(pins[2]) || digitalRead(pins[3]);
-	};
-
 	bool detectIntersection() {
-		return digitalRead(pins[0]) || digitalRead(pins[4]);
+		return (digitalRead(pins[0]) && digitalRead(pins[1]) && digitalRead(pins[2])) || (digitalRead(pins[2]) && digitalRead(pins[3]) && digitalRead(pins[4]));
 	};
 };

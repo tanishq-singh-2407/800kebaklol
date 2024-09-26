@@ -13,14 +13,14 @@ struct Motor motorRight {5, 4};
 
 Motors motors(&motorLeft, &motorRight);
 Sensors sensors(sensors_pin);
-PID pid(30, 0, 0);
+PID pid(60, 0, 0);
 
 String intToBin(int n) {
     if (n == 0) return "0";
     
     String binary = "";
     while (n > 0) {
-        binary = (n % 2 == 0 ? "0" : "1") + binary;
+        binary += (n % 2 == 0 ? "0" : "1");
         n /= 2;
     }
 
@@ -28,12 +28,12 @@ String intToBin(int n) {
 }
 
 void straight() {
-    while(!sensors.detectIntersection() && sensors.detectLine()) {
+    while(!sensors.detectIntersection()) {
         int error = sensors.getError();
         int tuning = pid.getTuning(error);
 
-        motors.driveLeft(baseSpeed + tuning);
-        motors.driveRight(baseSpeed - tuning);
+        motors.driveLeft(baseSpeed - tuning);
+        motors.driveRight(baseSpeed + tuning);
     };
 
     motors.stop();
@@ -58,22 +58,8 @@ void left() {
 };
 
 void loop() {
-/*
-    if (sensors.detectLine()) {
-        int tuning = pid.getTuning(sensors.getError());
+    int tuning = pid.getTuning(sensors.getError());
 
-        motors.driveLeft(baseSpeed + tuning);
-        motors.driveRight(baseSpeed - tuning);
-    } else motors.stop();
-*/
-  left();
-};
-
-void loopu() {
-    motors.driveRight(150);
-    motors.driveLeft(170);
-    delay(1000);
-
-    motors.stop();
-    delay(1000);
+    motors.driveLeft(baseSpeed + tuning);
+    motors.driveRight(baseSpeed - tuning);
 };
