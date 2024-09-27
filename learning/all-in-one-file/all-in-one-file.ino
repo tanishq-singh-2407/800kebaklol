@@ -1,9 +1,10 @@
-int baseSpeed = 140;
-int Kp = 110;
+int baseSpeed = 100;
+int turnSpeed = 100;
+int Kp = 40;
 int IN1 = 4, IN2 = 2, ENA = 5;
 int IN3 = 7, IN4 = 3, ENB = 6;
 
-int sensors[5] = {A4, A2, A3, A0, A1};
+int sensors[5] = {A1, A2, A3, A0, A4};
 
 void drive(int l, int r) {
     digitalWrite(IN1, l > 0 ? 1 : 0);
@@ -50,9 +51,80 @@ void setup() {
     Serial.begin(9600);
 };
 
-void loop() {
-    String linePosition = readLine();
-    int error;
+void turnRight() {
+    drive(0, 0);
+    String lp = readLine();
+
+    delay(200);
+
+    do { 
+        drive(turnSpeed, turnSpeed); delay(200);
+        drive(0, 0);
+
+        lp = readLine();
+    } while (lp[2] == '1' && lp[3] == '1' && lp[4] == '1');
+  
+    delay(100);
+
+    do {
+        drive(turnSpeed, -turnSpeed); delay(10);
+        drive(0, 0);
+
+        lp = readLine();
+    } while (lp[2] == '1' || lp[3] == '1');
+
+    delay(100);
+
+    do {
+        drive(turnSpeed, -turnSpeed); delay(10);
+        drive(0, 0);
+
+        lp = readLine();
+    } while(lp[2] != '1' && lp[3] != '1');
+
+    drive(0, 0);
+};
+
+void turnLeft() {
+    drive(0, 0);
+    String lp = readLine();
+
+    delay(200);
+
+    do { 
+        drive(turnSpeed, turnSpeed); delay(200);
+        drive(0, 0);
+
+        lp = readLine();
+    } while (lp[0] == '1' && lp[1] == '1' && lp[2] == '1');
+  
+    delay(100);
+
+    do {
+        drive(-turnSpeed, turnSpeed); delay(10);
+        drive(0, 0);
+
+        lp = readLine();
+    } while (lp[1] == '1' || lp[2] == '1');
+
+    delay(100);
+
+    do {
+        drive(-turnSpeed, turnSpeed); delay(10);
+        drive(0, 0);
+
+        lp = readLine();
+    } while(lp[1] != '1' && lp[2] != '1');
+
+    drive(0, 0);
+};
+
+void overshoot() {
+    String lp = readLine();
+};
+
+float tuning(String linePosition) {
+    float error;
 
     if (linePosition == "00100") error = 0.00;
     else if (linePosition == "01100") error = -0.25;
@@ -64,6 +136,24 @@ void loop() {
     else if (linePosition == "00011") error =  0.75;
     else if (linePosition == "00001") error =  1.00;
 
-    if (linePosition == "11100" || linePosition == "00111" || linePosition == "11111") drive(0, 0);
-    else drive(baseSpeed - (error * Kp), baseSpeed + (error * Kp));
+    return error * Kp; 
+}
+
+void straight() {
+    String linePosition = readLine();
+
+    if (linePosition == "11100") turnLeft();
+    else if (linePosition == "00111") turnRight();
+    else if (linePosition == "11111") turnLeft();
+    else if (linePosition == "00000") drive(0, 0);
+    else {
+        drive(baseSpeed + tuning(linePosition), baseSpeed - tuning(linePosition));
+        delay(20);
+        drive(0, 0);
+    };
+
+}
+
+void loop() {
+    straight();
 };
