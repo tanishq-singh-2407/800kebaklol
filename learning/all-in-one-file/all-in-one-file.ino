@@ -1,6 +1,6 @@
 int baseSpeed = 100;
 int turnSpeed = 100;
-int Kp = 40;
+int Kp = 65;
 int IN1 = 4, IN2 = 2, ENA = 5;
 int IN3 = 7, IN4 = 3, ENB = 6;
 
@@ -117,6 +117,7 @@ void turnLeft() {
     } while(lp[1] != '1' && lp[2] != '1');
 
     drive(0, 0);
+
 };
 
 void overshoot() {
@@ -142,18 +143,39 @@ float tuning(String linePosition) {
 void straight() {
     String linePosition = readLine();
 
+    Serial.println(linePosition);
+
     if (linePosition == "11100") turnLeft();
     else if (linePosition == "00111") turnRight();
     else if (linePosition == "11111") turnLeft();
     else if (linePosition == "00000") drive(0, 0);
     else {
         drive(baseSpeed + tuning(linePosition), baseSpeed - tuning(linePosition));
-        delay(20);
-        drive(0, 0);
     };
 
 }
 
 void loop() {
-    straight();
+  String lp = readLine();
+/*
+  if (lp == "00000") drive(0, 0);
+  else {
+    float tune = tuning(readLine());
+    drive(baseSpeed + tune, baseSpeed - tune);
+    delay(10);
+    drive(0,0);
+  };
+*/
+  int s = 110;
+
+  if (lp == "11111") {drive(0, 0); delay(3000);}
+  else if (lp == "11100") turnLeft();
+  else if (lp == "00111") turnRight();
+  else if (lp[2] == '1') drive(s, s);
+  else if (lp[1] == '1') drive(s/2, s);
+  else if (lp[0] == '1') drive(0, s);
+  else if (lp[3] == '1') drive(s, s/2);
+  else if (lp[4] == '1') drive(s, 0);
+  else drive(0, 0);
+
 };
