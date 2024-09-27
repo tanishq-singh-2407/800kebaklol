@@ -140,7 +140,7 @@ float tuning(String linePosition) {
     return error * Kp; 
 }
 
-void straight() {
+void straightPID() {
     String linePosition = readLine();
 
     Serial.println(linePosition);
@@ -155,27 +155,59 @@ void straight() {
 
 }
 
+void straight() {
+    String lp = readLine();
+    int s = 100; // speed
+
+    while (lp != "11111" && lp != "11100" && lp != "00111") {
+        if (lp[4] == '1') drive(s, 0);
+        else if (lp[0] == '1') drive(0, s);
+        else if (lp[1] == '1') drive(s/2, s);
+        else if (lp[3] == '1') drive(s, s/2);
+        else if (lp[2] == '1') drive(s, s);
+        else {drive(0, 0); break;};
+
+        delay(1); drive(0, 0);
+
+        lp = readLine();
+    }
+  
+    delay(10000);
+}
+
+void oneStep(){
+    drive(baseSpeed, baseSpeed); delay(50);
+    drive(0, 0);
+}; 
+
 void loop() {
-  String lp = readLine();
-/*
-  if (lp == "00000") drive(0, 0);
-  else {
-    float tune = tuning(readLine());
-    drive(baseSpeed + tune, baseSpeed - tune);
-    delay(10);
-    drive(0,0);
-  };
-*/
-  int s = 110;
+    straight();
+    String lp = readLine();
 
-  if (lp == "11111") {drive(0, 0); delay(3000);}
-  else if (lp == "11100") turnLeft();
-  else if (lp == "00111") turnRight();
-  else if (lp[2] == '1') drive(s, s);
-  else if (lp[1] == '1') drive(s/2, s);
-  else if (lp[0] == '1') drive(0, s);
-  else if (lp[3] == '1') drive(s, s/2);
-  else if (lp[4] == '1') drive(s, 0);
-  else drive(0, 0);
+    if (lp == "11111") { // (1. T), (2. +), (3. maze end)
+        oneStep();
+        lp = readLine();
+    
+        if (lp == "11111") {} // maze end
+        else if (lp[1] == '1' || lp[2] == '1' || lp[3] == '1') {} // +
+        else {} // T
+    }
 
+    else if (lp == "11100") { // (1. left T), (2. left)
+        oneStep();
+        lp = readLine();
+
+        if (lp[1] == '1' || lp[2] == '1' || lp[3] == '1') {} // Left T
+        else {} // Left
+    }
+
+    else if (lp == "00111") { // (1. right T), (2. right)
+        oneStep();
+        lp = readLine();
+
+        if(lp[1] == '1' || lp[2] == '1' || lp[3] == '1') {} // Right T
+        else {} // Right
+    }
+
+    else {} // u-turn
 };
