@@ -179,45 +179,66 @@ void oneStep(){
     drive(0, 0);
 }; 
 
-void loop() {
-    straight();
+int s = 80;
 
-    Serial.println();
-    Serial.print(lp);
-    Serial.print(" : ");
-        
-    if (lp == "11111" || lp == "01111" || lp == "11110") { // (1. T), (2. +), (3. maze end)
+void turn(char t) {
+    switch (t) {
+        case 'L':
+            while(lp[1] != '1') {
+                drive(-turnSpeed, turnSpeed); delay(1);
+                drive(0, 0);
+
+                lp = readLine();
+            }
+  
+            break;
+
+        case 'R':
+        case 'U':
+            while(lp[3] != '1') {
+                drive(turnSpeed, -turnSpeed); delay(1);
+                drive(0, 0);
+
+                lp = readLine();
+            }
+  
+            break;
+    };
+};
+
+void loop() {
+    lp = readLine();
+
+    if (lp == "11111" || lp == "01111" || lp == "11110" || lp == "01110") { // (1. T), (2. +), (3. maze end)
         oneStep();
         lp = readLine();
-        Serial.print(lp);
-        Serial.print(" : ");
 
-        if (lp == "11111") {Serial.print("maze end");} // maze end
-        else if (lp.indexOf('1') > 0) {Serial.print("+");} // +
-        else {Serial.print("T");} // T
+        if (lp == "11111") {} // maze end
+        else if (lp.indexOf('1') > 0) {turn('L');} // +
+        else {turn('L');} // T
     }
 
     else if (lp == "11100") { // (1. left T), (2. left)
         oneStep();
         lp = readLine();
-        Serial.print(lp);
-        Serial.print(" : ");
 
-        if (lp.indexOf('1') > 0) {Serial.print("left t");} // Left T
-        else {Serial.print("left");} // Left
+        if (lp.indexOf('1') > 0) {turn('L');} // Left T
+        else {turn('L');} // Left
     }
 
     else if (lp == "00111") { // (1. right T), (2. right)
         oneStep();
         lp = readLine();
-        Serial.print(lp);
-        Serial.print(" : ");
 
-        if(lp.indexOf('1') > 0) {Serial.print("right t");} // Right T
-        else {Serial.print("right");} // Right
+        if(lp.indexOf('1') > 0) {} // Right T
+        else {turn('R');} // Right
     }
 
-    else {Serial.print("u turn");} // u-turn
-
-    delay(10000);
+    else if (lp[1] == '1' || lp[0] == '1') drive(0, s);
+    else if (lp[3] == '1' || lp[4] == '1') drive(s, 0);
+    else if (lp[2] == '1') drive(s, s);
+    else {turn('U');} // u-turn
+   
+    delay(1);
+    drive(0, 0); 
 };
