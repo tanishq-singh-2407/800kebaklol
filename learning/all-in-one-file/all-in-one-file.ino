@@ -5,6 +5,8 @@ int IN1 = 4, IN2 = 2, ENA = 5;
 int IN3 = 7, IN4 = 3, ENB = 6;
 
 int sensors[5] = {A1, A2, A3, A0, A4};
+String lp = "00000";
+String path = "";
 
 void drive(int l, int r) {
     digitalWrite(IN1, l > 0 ? 1 : 0);
@@ -53,7 +55,7 @@ void setup() {
 
 void turnRight() {
     drive(0, 0);
-    String lp = readLine();
+    lp = readLine();
 
     delay(200);
 
@@ -87,7 +89,7 @@ void turnRight() {
 
 void turnLeft() {
     drive(0, 0);
-    String lp = readLine();
+    lp = readLine();
 
     delay(200);
 
@@ -121,7 +123,7 @@ void turnLeft() {
 };
 
 void overshoot() {
-    String lp = readLine();
+    lp = readLine();
 };
 
 float tuning(String linePosition) {
@@ -156,58 +158,66 @@ void straightPID() {
 }
 
 void straight() {
-    String lp = readLine();
-    int s = 100; // speed
+    lp = readLine();
+    int s = 90; // speed
 
     while (lp != "11111" && lp != "11100" && lp != "00111") {
-        if (lp[4] == '1') drive(s, 0);
-        else if (lp[0] == '1') drive(0, s);
-        else if (lp[1] == '1') drive(s/2, s);
-        else if (lp[3] == '1') drive(s, s/2);
+        if (lp[1] == '1' || lp[0] == '1') drive(0, s);
+        else if (lp[3] == '1' || lp[4] == '1') drive(s, 0);
         else if (lp[2] == '1') drive(s, s);
         else {drive(0, 0); break;};
 
         delay(1); drive(0, 0);
-
         lp = readLine();
     }
-  
-    delay(10000);
+
+    delay(500);
 }
 
 void oneStep(){
-    drive(baseSpeed, baseSpeed); delay(50);
+    drive(baseSpeed, baseSpeed); delay(150);
     drive(0, 0);
 }; 
 
 void loop() {
     straight();
-    String lp = readLine();
 
-    if (lp == "11111") { // (1. T), (2. +), (3. maze end)
+    Serial.println();
+    Serial.print(lp);
+    Serial.print(" : ");
+        
+    if (lp == "11111" || lp == "01111" || lp == "11110") { // (1. T), (2. +), (3. maze end)
         oneStep();
         lp = readLine();
-    
-        if (lp == "11111") {} // maze end
-        else if (lp[1] == '1' || lp[2] == '1' || lp[3] == '1') {} // +
-        else {} // T
+        Serial.print(lp);
+        Serial.print(" : ");
+
+        if (lp == "11111") {Serial.print("maze end");} // maze end
+        else if (lp.indexOf('1') > 0) {Serial.print("+");} // +
+        else {Serial.print("T");} // T
     }
 
     else if (lp == "11100") { // (1. left T), (2. left)
         oneStep();
         lp = readLine();
+        Serial.print(lp);
+        Serial.print(" : ");
 
-        if (lp[1] == '1' || lp[2] == '1' || lp[3] == '1') {} // Left T
-        else {} // Left
+        if (lp.indexOf('1') > 0) {Serial.print("left t");} // Left T
+        else {Serial.print("left");} // Left
     }
 
     else if (lp == "00111") { // (1. right T), (2. right)
         oneStep();
         lp = readLine();
+        Serial.print(lp);
+        Serial.print(" : ");
 
-        if(lp[1] == '1' || lp[2] == '1' || lp[3] == '1') {} // Right T
-        else {} // Right
+        if(lp.indexOf('1') > 0) {Serial.print("right t");} // Right T
+        else {Serial.print("right");} // Right
     }
 
-    else {} // u-turn
+    else {Serial.print("u turn");} // u-turn
+
+    delay(10000);
 };

@@ -6,7 +6,7 @@ int maxSpeed = 255;
 int minSpeed = 150;
 int baseSpeed = 110;
 
-const int sensors_pin[5] = {A4, A0, A3, A2, A1};
+const int sensors_pin[5] = {A1, A2, A3, A0, A4};
 
 struct Motor motorLeft {6, 7};
 struct Motor motorRight {5, 4};
