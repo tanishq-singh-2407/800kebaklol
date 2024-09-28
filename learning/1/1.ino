@@ -1,16 +1,17 @@
-// Motor
-const int baseSpeed = 90;
+// bang bang se mast chal raha h, turns bhe smooth le raha h, and sonar bhe mast chal raha h, but node acche se detect kar raha h
+
+// Motors
+const int baseSpeed = 100;
 const int turnSpeed = 100;
 const int IN1 = 4, IN2 = 2, ENA = 5;
 const int IN3 = 7, IN4 = 3, ENB = 6;
 
-// ultrasonic sensor
+// Ultrasonic
 const int echo = 9, trig = 10;
 
-// IR Sensors
+// IR Sensor
 const int sensors[5] = {A1, A2, A3, A0, A4};
 String lp = "00000";
-
 String path = "";
 
 void drive(int l, int r) {
@@ -33,21 +34,24 @@ void drive(int l, int r) {
     analogWrite(ENB, constrain(abs(r), 0, 255));
 };
 
-String readLine() {
+String readLine(bool readDistance = true) {
     String linePosition = "";
 
-    digitalWrite(trig, LOW);
-    delayMicroseconds(2);  digitalWrite(trig, HIGH);
-    delayMicroseconds(10); digitalWrite(trig, LOW);
+	if (readDistance) {
+		digitalWrite(trig, LOW);
+		delayMicroseconds(2);  digitalWrite(trig, HIGH);
+		delayMicroseconds(10); digitalWrite(trig, LOW);
 
-    float duration = pulseIn(echo, HIGH);
-    float distance = (duration * .0343) / 2;
+		float duration = pulseIn(echo, HIGH, 100000L);
+		float distance = (duration * .0343) / 2;
 
-    for (int i=0; i<5; i++)
-        linePosition += digitalRead(sensors[i]) ? "1" : "0";
+		if (distance < 15.0 && distance) return "00000";
+	}
+	
+	for (int i=0; i<5; i++)
+		linePosition += digitalRead(sensors[i]) ? "1" : "0";
 
-    // return distance < 12 ? "00000" : linePosition;
-    return linePosition;
+	return linePosition;
 };
 
 void setup() {
@@ -75,24 +79,29 @@ void oneStep(){
 }; 
 
 void turn(char t) {
+	drive(0, 0);
+
     switch (t) {
         case 'L':
             while(lp[1] != '1') {
                 drive(-turnSpeed, turnSpeed); delay(1);
                 drive(0, 0);
 
-                lp = readLine();
+                lp = readLine(false);
             }
   
             break;
 
+		case 'U':
+			drive(turnSpeed, -turnSpeed); delay(250);
+			drive(0, 0);
+
         case 'R':
-        case 'U':
             while(lp[3] != '1') {
                 drive(turnSpeed, -turnSpeed); delay(1);
                 drive(0, 0);
 
-                lp = readLine();
+                lp = readLine(false);
             }
   
             break;
@@ -127,8 +136,10 @@ void loop() {
         else {turn('R');} // Right
     }
 
-    else if (lp[1] == '1' || lp[0] == '1') drive(0, baseSpeed);
-    else if (lp[3] == '1' || lp[4] == '1') drive(baseSpeed, 0);
-    else if (lp[2] == '1') drive(baseSpeed, baseSpeed);
+    else if (lp[0] == '1') {drive(0, 1.3 * baseSpeed); drive(0, 105);}
+    else if (lp[4] == '1') {drive(1.3 * baseSpeed, 0); drive(105, 0);}
+    else if (lp[1] == '1') {drive(0, 1.3 * baseSpeed); drive(70 / 2, 87);}
+    else if (lp[3] == '1') {drive(1.3 * baseSpeed, 0); drive(87, 70 / 2);}
+    else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
     else {turn('U');} // u-turn
 };
