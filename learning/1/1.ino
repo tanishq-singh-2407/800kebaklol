@@ -37,21 +37,21 @@ void drive(int l, int r) {
 String readLine(bool readDistance = true) {
     String linePosition = "";
 
-	if (readDistance) {
-		digitalWrite(trig, LOW);
-		delayMicroseconds(2);  digitalWrite(trig, HIGH);
-		delayMicroseconds(10); digitalWrite(trig, LOW);
+    if (readDistance) {
+        digitalWrite(trig, LOW);
+        delayMicroseconds(2);  digitalWrite(trig, HIGH);
+        delayMicroseconds(10); digitalWrite(trig, LOW);
 
-		float duration = pulseIn(echo, HIGH, 100000L);
-		float distance = (duration * .0343) / 2;
+        float duration = pulseIn(echo, HIGH, 10000L);
+        float distance = (duration * .0343) / 2;
 
-		if (distance < 15.0 && distance) return "00000";
-	}
-	
-	for (int i=0; i<5; i++)
-		linePosition += digitalRead(sensors[i]) ? "1" : "0";
+        if (distance < 15.0 && distance) return "00000";
+    }
+    
+    for (int i=0; i<5; i++)
+        linePosition += digitalRead(sensors[i]) ? "1" : "0";
 
-	return linePosition;
+    return linePosition;
 };
 
 void setup() {
@@ -79,7 +79,7 @@ void oneStep(){
 }; 
 
 void turn(char t) {
-	drive(0, 0);
+    drive(0, 0);
 
     switch (t) {
         case 'L':
@@ -92,9 +92,9 @@ void turn(char t) {
   
             break;
 
-		case 'U':
-			drive(turnSpeed, -turnSpeed); delay(250);
-			drive(0, 0);
+        case 'U':
+            drive(turnSpeed, -turnSpeed); delay(250);
+            drive(0, 0);
 
         case 'R':
             while(lp[3] != '1') {
@@ -138,8 +138,8 @@ void loop() {
 
     else if (lp[0] == '1') {drive(0, 1.3 * baseSpeed); drive(0, 105);}
     else if (lp[4] == '1') {drive(1.3 * baseSpeed, 0); drive(105, 0);}
-    else if (lp[1] == '1') {drive(0, 1.3 * baseSpeed); drive(70 / 2, 87);}
-    else if (lp[3] == '1') {drive(1.3 * baseSpeed, 0); drive(87, 70 / 2);}
+    else if (lp[1] == '1') {drive(0, 1.3 * baseSpeed); drive(baseSpeed / 2.5, baseSpeed);}
+    else if (lp[3] == '1') {drive(1.3 * baseSpeed, 0); drive(baseSpeed, baseSpeed / 2.5);}
     else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
     else {turn('U');} // u-turn
 };
