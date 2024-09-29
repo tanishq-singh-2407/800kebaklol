@@ -109,43 +109,35 @@ void turn(char t) {
 };
 
 String plp = "";
-int sp = 60, n = 0;
+int sp = 80, n = 0;
 
 void loop() {
     lp = readLine();
     n++;
 
-    if (lp == "11111" || lp == "01111" || lp == "11110" || lp == "01110") { // (1. T), (2. +), (3. maze end)
+    if (lp == "11111") { // (1. T), (2. +), (3. maze end)
         oneStep();
         lp = readLine();
 
         if (lp == "11111") {} // maze end
-        else if (lp.indexOf('1') > 0) {turn('L');} // +
-        else {turn('L');} // T
+        else {turn('L');} // T and +
     }
 
-    else if (lp == "11100") { // (1. left T), (2. left)
-        oneStep();
-        lp = readLine();
-
-        if (lp.indexOf('1') > 0) {turn('L');} // Left T
-        else {turn('L');} // Left
-    }
-
-    else if (lp == "00111") { // (1. right T), (2. right)
+    else if (lp == "11100" || lp == "11110") {turn('L');} // left and left-T 
+    else if (lp == "00111" || lp == "01111") { // (1. right T), (2. right)
         oneStep();
         lp = readLine();
 
         if(lp.indexOf('1') > 0) {} // Right T
         else {turn('R');} // Right
     }
-
-    else if (lp[0] == '1') {drive(0, 1.3 * baseSpeed); drive(0, baseSpeed);}
-    else if (lp[4] == '1') {drive(1.3 * baseSpeed, 0); drive(baseSpeed, 0);}
-    else if (lp[1] == '1') {drive(0, 1.4 * baseSpeed); drive(sp / 3, lp == plp ? baseSpeed : sp);}
-    else if (lp[3] == '1') {drive(1.4 * baseSpeed, 0); drive(lp == plp ? baseSpeed : sp, sp / 3);}
+       
+    else if (lp[0] == '1') {drive(0, 1.3 * baseSpeed); delay(1); drive(0, baseSpeed);}
+    else if (lp[4] == '1') {drive(1.3 * baseSpeed, 0); delay(1); drive(baseSpeed, 0);}
+    else if (lp[1] == '1') {drive(0, 1.4 * baseSpeed); delay(1); drive(sp / 3, lp == plp ? 1.3 * baseSpeed : sp);}
+    else if (lp[3] == '1') {drive(1.4 * baseSpeed, 0); delay(1); drive(lp == plp ? 1.3 * baseSpeed : sp, sp / 3);}
     else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
     else {turn('U');} // u-turn
 
-    if (!(n % 4)) plp = lp;
+    if(!(n++ % 4)) plp = lp;
 };
