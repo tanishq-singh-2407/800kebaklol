@@ -1,13 +1,9 @@
-// bang bang se mast chal raha h, turns bhe smooth le raha h, and sonar bhe mast chal raha h, but node acche se detect kar raha h
-// node detection awai hai
-// but kutch toh kar raha h
-
 #include <Servo.h>
 
 // Motors
 const int baseSpeed = 100;
 const int turnSpeed = 100;
-int bangSpeed = 100, n = 0;
+int bangSpeed = 100;
 const int IN1 = 4, IN2 = 2, ENA = 5;
 const int IN3 = 7, IN4 = 3, ENB = 6;
 
@@ -22,11 +18,11 @@ String path = "";
 // Servo
 Servo s1;
 
+bool oneTime = true; // pickup treasure
 bool mazeSolve = true;
 int retracePath = 0;
-String plp = "";
 
-void drive(int l, int r) {
+void drive(int l, int r) { // left motor speed, right motor speed
     digitalWrite(IN1, l > 0 ? 1 : 0);
     digitalWrite(IN2, l > 0 ? 0 : 1);
     digitalWrite(IN3, r > 0 ? 1 : 0);
@@ -46,11 +42,8 @@ void drive(int l, int r) {
     analogWrite(ENB, constrain(abs(r), 0, 255));
 };
 
-String readLine(bool readDistance = true) {
+String readLine(bool readDistance = true) { // return position of black strip, or object in front
     String linePosition = "";
-
-	for (int i=0; i<5; i++)
-        linePosition += digitalRead(sensors[i]) ? "1" : "0";
 
     if (readDistance) {
         digitalWrite(trig, LOW);
@@ -63,25 +56,40 @@ String readLine(bool readDistance = true) {
 		if (distance < 15.0 && distance) return "00000";
     }
 
+	for (int i=0; i<5; i++)
+        linePosition += digitalRead(sensors[i]) ? "1" : "0";
+
     return linePosition;
 };
 
-void oneStep(bool forward = true){
-    drive(0, 0);
-    drive(forward ? baseSpeed : -baseSpeed, forward ? baseSpeed : -baseSpeed); delay(150);
+void oneStep(bool forward = true, unsigned long delayTime = 150){ // move one step forward
+    drive(0, 0); delay(200);
+    drive(forward ? baseSpeed : -baseSpeed, forward ? baseSpeed : -baseSpeed); delay(delayTime);
     drive(0, 0);
 }; 
 
-void turn(char t) {
+void turn(char t, bool move = true) {
     drive(0, 0);
 
     switch (t) {
         case 'B':
-            drive(-turnSpeed, turnSpeed); delay(250);
-            drive(0, 0);
+			drive(-turnSpeed, turnSpeed); delay(600); drive(0, 0); delay(300);
+
+            while(lp[3] != '1' && lp[2] != '1' && lp[4] != '1') {
+                drive(-turnSpeed, turnSpeed); delay(1);
+                drive(0, 0);
+
+                lp = readLine(false);
+            }
+  
+            break;
+
 
         case 'L':
-            while(lp[1] != '1') {
+			if (move) oneStep();
+			drive(-turnSpeed, turnSpeed); delay(400); drive(0, 0); delay(300);
+
+            while(lp[3] != '1' && lp[2] != '1' && lp[4] != '1') {
                 drive(-turnSpeed, turnSpeed); delay(1);
                 drive(0, 0);
 
@@ -91,7 +99,10 @@ void turn(char t) {
             break;
         
         case 'R':
-            while(lp[3] != '1') {
+			if (move) oneStep();
+			drive(turnSpeed, -turnSpeed); delay(400);  drive(0, 0); delay(300);
+
+            while(lp[3] != '1' && lp[2] != '1' && lp[4] != '1') {
                 drive(turnSpeed, -turnSpeed); delay(1);
                 drive(0, 0);
 
@@ -110,7 +121,7 @@ String shortPathBackwards(String path) {
     path.replace("SBL", "R");
     path.replace("LBR", "B");
 
-    return reverseString(path);
+    return path;
 };
 
 String reverseString(String str) {
@@ -121,12 +132,7 @@ String reverseString(String str) {
         reversed += str[i];
     
     return reversed;
-}
-
-void caseTs() {
-    if (lp == "11111") {drive(0, 0); mazeSolve = false;} // maze end
-    else {turn('L'); path += 'L';} // T or +
-}
+};
 
 void setup() {
     pinMode(IN1, OUTPUT);
@@ -155,64 +161,81 @@ void setup() {
 
 void loop() {
     lp = readLine(mazeSolve);
-    if(!(n++ % 5)) plp = lp;
 
-    if (mazeSolve) {
-        if (lp == "11111") { // (1. T), (2. +), (3. maze end)
-            oneStep();
-            lp = readLine(false);
+	if (mazeSolve) { // maze solving
+		if (lp[0] == '1' && lp[4] == '1') { // T, +, maze end
+			oneStep();
+			lp = readLine(false);
 
-            caseTs();
-        }
+			if (lp == "11111") { mazeSolve = false; }
+			else { drive(0, 0); delay(1000); turn('L', false); path += 'L'; } // T or +
+		}
+		else if (lp == "11100" || lp == "11110") { // left, left-T, maze end
+			oneStep();
+			lp = readLine(false);
 
-        else if (lp == "11100" || lp == "11110") {turn('L'); path += 'L';} // left and left-T
-        else if (lp == "00111" || lp == "01111") { // (1. right T), (2. right)
-            oneStep();
-            lp = readLine();
+			if (lp == "11111") { mazeSolve = false; }
+			else { turn('L', false); path += 'L';}
+		}
+		else if (lp == "00111" || lp == "01111") { // right, right-T, maze end
+			oneStep();
+			lp = readLine();
 
-            if(lp.indexOf('1') > 0) {path += 'S';} // Right T
-            else {turn('R'); path += 'R';} // Right
-        }
+			if (lp == "11111") { mazeSolve = false; }
+			else if(lp.indexOf('1') > 0) { path += 'S'; }
+			else {turn('R', false); path += 'R';}
+		}
+		else if (lp[0] == '1') {drive(0, 1.4 * baseSpeed);              drive(0, bangSpeed);            }
+		else if (lp[4] == '1') {drive(1.4 * baseSpeed, 0);              drive(bangSpeed, 0);            }
+		else if (lp[1] == '1') {drive(.5 * baseSpeed, 1.4 * baseSpeed); drive(bangSpeed / 3, bangSpeed);}
+		else if (lp[3] == '1') {drive(1.4 * baseSpeed, .5 * baseSpeed); drive(bangSpeed, bangSpeed / 3);}
+		else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
+		else { turn('B'); path += 'B'; }; // u-turn
+	} else { // maze solved, retracing path
+		if (oneTime) {
+			digitalWrite(13, 1); delay(2000);
+			s1.write(0); delay(2000);
 
-        else if (lp[0] == '1') {drive(0, 1.4 * baseSpeed);              drive(0, bangSpeed);}
-        else if (lp[4] == '1') {drive(1.4 * baseSpeed, 0);              drive(bangSpeed, 0);}
-        else if (lp[1] == '1') {drive(.5 * baseSpeed, 1.4 * baseSpeed); drive(bangSpeed / 3, bangSpeed);}
-        else if (lp[3] == '1') {drive(1.4 * baseSpeed, .5 * baseSpeed); drive(bangSpeed, bangSpeed / 3);}
-        else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
-        else {turn('B'); path += 'B'; } // u-turn
-    } else {
-        digitalWrite(13, 1);
-        delay(2000);
+			oneStep(false, 200);
+			turn('B');
+			
+			while(path.indexOf('B') > 0) {
+        		path = shortPathBackwards(path);
+			};
+			
+			for (int i=0; i<path.length(); i++)
+				path[i] = path[i] == 'L' ? 'R' : path[i] == 'R' ? 'L' : path[i];
 
-        s1.write(0);
+    		path = reverseString(path);
+			
+			oneTime = false;
+
+			drive(baseSpeed, baseSpeed);
+			lp = readLine(false);
+		}
 
 
-        // Uturn likho acche se
-
-        path = shortPathBackwards(path);
-
-        if (retracePath + 1 == path.length() && lp.indexOf('1') < 0) drive(0, 0); // back to start
-        else if (lp.indexOf("111") > 0) { // any type of turn detected
+		if (lp == "11100" || lp == "00111" || lp == "11110" || lp == "01111" || lp == "11111") { // any type of turn detected
             switch(path[retracePath++]) {
                 case 'L':
-                    turn('L');  
+					turn('L');
                     break;
 
                 case 'R':
-                    turn('R');  
+					turn('R');
                     break;
 
                 case 'S':
-                    oneStep();
+                    oneStep(true, 250);
                     break;
-            }            
+            }; 
         }
 
-        // else if (lp[0] == '1') {drive(0, 1.3 * baseSpeed); drive(0, baseSpeed);}
-        // else if (lp[4] == '1') {drive(1.3 * baseSpeed, 0); drive(baseSpeed, 0);}
-        // else if (lp[1] == '1') {drive(0, 1.4 * baseSpeed); drive(bangSpeed / 3, plp == lp ? 1.3 * baseSpeed : bangSpeed);}
-        // else if (lp[3] == '1') {drive(1.4 * baseSpeed, 0); drive(plp == lp ? 1.3 * baseSpeed : bangSpeed, bangSpeed / 3);}
-        // else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
-        // else {turn('B');}
-    }
+		else if (lp[0] == '1') {drive(0, 1.4 * baseSpeed);              drive(0, bangSpeed);            }
+		else if (lp[4] == '1') {drive(1.4 * baseSpeed, 0);              drive(bangSpeed, 0);            }
+		else if (lp[1] == '1') {drive(.5 * baseSpeed, 1.4 * baseSpeed); drive(bangSpeed / 3, bangSpeed);}
+		else if (lp[3] == '1') {drive(1.4 * baseSpeed, .5 * baseSpeed); drive(bangSpeed, bangSpeed / 3);}
+		else if (lp[2] == '1') {drive(baseSpeed, baseSpeed);}
+		else { turn('B'); };
+	};
 };
